@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd"><!-- PDF가면 자세한 사항 있음 -->
+<mapper namespace="mapper.member">
+ <!-- type에 필드이름 쓸려면 필드이름과 컬럼이름이 동일해야한다 id는 그냥 변수이름설정하기 -->
+ <!-- property=필드이름 column은 DB속 컬럼명 -->
+   <resultMap type="memberVO" id="memResult">
+      <result property="id" column="id"/> 
+      <result property="pwd" column="pwd"/>
+      <result property="name" column="name"/>
+      <result property="email" column="email"/>
+      <result property="joinDate" column="joinDate"/>  
+<!--   <resultMap type="java.util.HashMap" id="memResult">
+      <result property="id" column="id"/> 
+      <result property="pwd" column="pwd"/>
+      <result property="name" column="name"/>
+      <result property="email" column="email"/>
+      <result property="joinDate" column="joinDate"/>      -->
+   </resultMap>
+   <sql id="a">
+      <![CDATA[ 
+         select * from membertbl
+      ]]>   
+   </sql>
+   <select id="selectAllMemberList" resultMap="memResult"> <!-- resultMap=> select문을 수행하고 나서 저장할 장소 select문을 수행하고나서 SQL에서 받아온 값을 resultMap에 넣고 그게 다시 property에 저장되게하는 흐름-->
+      <!--CDATA를 써야하는 이유 ※무조건 써야함 xml은 html과 같은 마크업언어 이기때문
+      예시로 query문을 쓸떄 where price >= 5000등 쓰면 비교연산자사용시 마크업언어와 같아서 인식이 오류뜬다 
+      CDATA를 쓰면 내부에있는걸 연산자라는거로 인식하기떄문에 필수로 쓴다 -->
+      <![CDATA[ 
+         select * from membertbl order by joinDate desc 
+      ]]>            <!-- ;없어도 된다 sql할떄 썻던거 그대로 적으면됌 -->
+   </select>
+   <select id="selectName" resultType="String"> <!-- resultType=>하나의 값만 select문으로 가져옴 -->
+   <![CDATA[
+      select name from membertbl where id='dl7617'
+   ]]>
+   </select>
+   
+   <select id="selectPwd" resultType="String"> <!-- resultType=>하나의 값만 select문으로 가져옴 -->
+   <![CDATA[
+      select pwd from membertbl where id='dl7617'
+   ]]>
+   </select>
+   <select id="selectMemberById" resultType="memberVO" parameterType="String"> <!-- resultType=>하나의 값만 select문으로 가져옴 -->
+      <include refid="a"/>
+      <where>
+         id=#{id} 
+      </where>                     <!-- ↑mybatis에서는 #{받을 매개변수}를 사용한다 표현언어인 $랑은 다름 -->
+   </select>
+   <select id="selectMemberByName" resultMap="memResult" parameterType="String"> <!-- resultType=>하나의 값만 select문으로 가져옴 -->
+      <include refid="a"/>
+      <where>
+         name=#{name}
+      </where>               <!-- ↑mybatis에서는 #{받을 매개변수}를 사용한다 표현언어인 $랑은 다름 -->
+   </select>
+   <insert id="insertMember" parameterType="memberVO">
+      <![CDATA[
+         insert into membertbl (id, pwd, name, email) values(#{id}, #{pwd}, #{name}, #{email}) 
+      ]]>
+   </insert>
+   <insert id="insertMember2" parameterType="java.util.HashMap">
+      <![CDATA[
+         insert into membertbl (id, pwd, name, email) values(#{id}, #{pwd}, #{name}, #{email}) 
+      ]]>
+   </insert>
+   <insert id="updateMember" parameterType="memberVO">
+      <![CDATA[
+         update membertbl set pwd=#{pwd}, name=#{name}, email=#{email} where id=#{id}
+      ]]>
+   </insert>
+   <delete id="delMember" parameterType="String">
+      <![CDATA[
+         delete from membertbl where id=#{id}
+      ]]>
+   </delete>
+   <!--   마이바티스 동적 sql문(where조건에 if활용)
+   <select id="searchMember" parameterType="memberVO" resultMap="memResult">
+      
+         select * from membertbl
+         <where>
+            <if test="name != '' and name != null">
+               name=#{name}
+            </if>
+            <if test="email != '' and email != null">
+               email=#{email}
+            </if>
+         </where>
+         order by joinDate desc
+   
+   </select>
+   -->
+   <select id="searchMember" parameterType="memberVO" resultMap="memResult">
+         <include refid="a"/>
+         <where>
+            <choose>
+               <when test="name != '' and name != null and email != '' and email != null">
+                  name=#{name} and email=#{email}
+               </when>
+               <when test="name != '' and name != null">
+                  name like '%' || #{name} || '%'
+               </when>
+               <when test="email != '' and email != null">
+                  email=#{email}
+               </when>
+            </choose>
+         </where>
+         order by joinDate desc
+   </select>
+</mapper>
